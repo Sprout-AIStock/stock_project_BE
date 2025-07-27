@@ -1,0 +1,6 @@
+# Environment
+.env
+venv/
+
+# Database
+sql_app.db
