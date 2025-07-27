@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.responses import FileResponse  # 👈 1. FileResponse import 추가
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -25,9 +26,10 @@ def get_db():
 def startup_event():
     start_scheduler()
 
-@app.get("/")
+# 👇 2. 루트 경로('/') 요청 시 index.html 파일을 반환하도록 수정
+@app.get("/", include_in_schema=False)
 def read_root():
-    return {"message": "AI 금융 정보 서버에 오신 것을 환영합니다!"}
+    return FileResponse("static/index.html")
 
 @app.get("/api/news/macro", response_model=List[NewsArticle])
 def get_macro_news(db: Session = Depends(get_db)):

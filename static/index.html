@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 금융 정보 서비스</title>
+    <style>
+        /* 기본 스타일링 (간단하게 구성) */
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; margin: 0; background-color: #f4f7f9; color: #333; }
+        .container { max-width: 1200px; margin: 20px auto; padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        header { text-align: center; margin-bottom: 30px; }
+        h1 { color: #2c3e50; }
+        h2 { border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; margin-top: 40px; color: #34495e; }
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .card { padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #fafafa; }
+        .card h3 { margin-top: 0; }
+        .news-list, .keyword-list { list-style-type: none; padding: 0; }
+        .news-list li, .keyword-list li { padding: 8px 0; border-bottom: 1px dashed #ccc; display: flex; justify-content: space-between; align-items: center; }
+        .news-list a { text-decoration: none; color: #2980b9; font-weight: 500; }
+        .news-list a:hover { text-decoration: underline; }
+        .news-list .count { font-size: 0.9em; color: #c0392b; font-weight: bold; margin-left: 10px;}
+        .keyword-list .rank { font-weight: bold; margin-right: 10px; }
+        #search-section input { padding: 10px; width: 300px; border: 1px solid #ccc; border-radius: 4px; }
+        #search-section button { padding: 10px 15px; border: none; background-color: #3498db; color: white; border-radius: 4px; cursor: pointer; }
+        #stock-details { margin-top: 20px; background-color: #ecf0f1; padding: 20px; border-radius: 5px; }
+        #ai-insight { margin-top: 15px; border: 1px solid #95a5a6; padding: 15px; border-radius: 5px; white-space: pre-wrap; line-height: 1.6; }
+        .theme-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+        .theme-buttons button { padding: 8px 12px; border: 1px solid #7f8c8d; background-color: transparent; border-radius: 20px; cursor: pointer; transition: all 0.2s; }
+        .theme-buttons button:hover, .theme-buttons button.active { background-color: #34495e; color: white; border-color: #34495e;}
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>📈 AI 금융 정보 서비스 📉</h1>
+        </header>
+
+        <section id="search-section">
+            <h2>종목 검색</h2>
+            <form id="stock-search-form">
+                <input type="text" id="stock-code-input" placeholder="종목코드 입력 (예: 005930)" required>
+                <button type="submit">검색</button>
+            </form>
+            <div id="stock-details"></div>
+            <div id="ai-insight"></div>
+        </section>
+
+        <div class="grid-container">
+            <div class="card">
+                <h3>🌏 거시경제 메인 이슈</h3>
+                <ul id="macro-news" class="news-list"></ul>
+            </div>
+            <div class="card">
+                <h3>🔥 인기 기사</h3>
+                <ul id="popular-news" class="news-list"></ul>
+            </div>
+            <div class="card">
+                <h3>🔍 인기 검색어 (24H)</h3>
+                <ol id="top-keywords" class="keyword-list"></ol>
+            </div>
+        </div>
+
+        <section>
+            <h2>테마별 최신 기사</h2>
+            <div id="theme-buttons" class="theme-buttons"></div>
+            <ul id="themed-news" class="news-list"></ul>
+        </section>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:8000';
+
+        // 백엔드 API 호출 함수들
+        const api = {
+            get: (path) => fetch(`${API_BASE_URL}${path}`).then(res => res.json()),
+            post: (path) => fetch(`${API_BASE_URL}${path}`, { method: 'POST' })
+        };
+
+        // 기사 목록을 화면에 그리는 함수
+        function renderArticles(elementId, articles) {
+            const container = document.getElementById(elementId);
+            container.innerHTML = ''; // 기존 내용 비우기
+            if (!articles || articles.length === 0) {
+                container.innerHTML = '<li>최신 기사가 없습니다.</li>';
+                return;
+            }
+            articles.forEach(article => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = article.url;
+                a.textContent = article.title;
+                a.target = '_blank'; // 새 탭에서 열기
+                a.addEventListener('click', () => {
+                    // 클릭 시 조회수 증가 API 호출 (결과를 기다리지 않음)
+                    api.post(`/api/articles/${article.id}/click`);
+                });
+                li.appendChild(a);
+
+                // 인기 기사인 경우에만 조회수 표시
+                if (elementId === 'popular-news' && article.click_count > 0) {
+                    const span = document.createElement('span');
+                    span.className = 'count';
+                    span.textContent = `${article.click_count}회`;
+                    li.appendChild(span);
+                }
+                container.appendChild(li);
+            });
+        }
+        
+        // 페이지가 처음 로드될 때 실행될 함수
+        async function initializePage() {
+            // 1. 거시경제 뉴스 로드
+            const macroNews = await api.get('/api/news/macro');
+            renderArticles('macro-news', macroNews);
+
+            // 2. 인기 기사 로드
+            const popularNews = await api.get('/api/news/popular');
+            renderArticles('popular-news', popularNews);
+
+            // 3. 인기 검색어 로드
+            const topKeywords = await api.get('/api/keywords/top');
+            const keywordsContainer = document.getElementById('top-keywords');
+            keywordsContainer.innerHTML = '';
+            topKeywords.forEach((kw, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span class="rank">${index + 1}</span> ${kw.keyword} <span>${kw.count}회</span>`;
+                keywordsContainer.appendChild(li);
+            });
+
+            // 4. 테마 버튼 생성
+            const themes = await api.get('/api/themes');
+            const themesContainer = document.getElementById('theme-buttons');
+            themes.forEach(theme => {
+                const button = document.createElement('button');
+                button.textContent = theme;
+                button.addEventListener('click', async (event) => {
+                    // 모든 버튼에서 'active' 클래스 제거
+                    document.querySelectorAll('.theme-buttons button').forEach(btn => btn.classList.remove('active'));
+                    // 현재 클릭된 버튼에 'active' 클래스 추가
+                    event.target.classList.add('active');
+                    
+                    const themedNews = await api.get(`/api/news/theme/${theme}`);
+                    renderArticles('themed-news', themedNews);
+                });
+                themesContainer.appendChild(button);
+            });
+            // 첫번째 테마 버튼을 기본으로 클릭
+            if (themesContainer.firstChild) {
+                themesContainer.firstChild.click();
+            }
+        }
+
+        // 검색 폼 제출 이벤트 처리
+        document.getElementById('stock-search-form').addEventListener('submit', async (e) => {
+            e.preventDefault(); // 폼 기본 제출 동작 막기
+            const stockCode = document.getElementById('stock-code-input').value;
+            const detailsContainer = document.getElementById('stock-details');
+            const insightContainer = document.getElementById('ai-insight');
+            
+            detailsContainer.innerHTML = '🔍 검색 중...';
+            insightContainer.innerHTML = '';
+
+            try {
+                // 상세 정보, AI 인사이트 동시 요청
+                const [details, insight] = await Promise.all([
+                    api.get(`/api/stock/search/${stockCode}`),
+                    api.get(`/api/insight/${stockCode}`)
+                ]);
+
+                if (details.detail || insight.detail) {
+                    throw new Error('종목 정보를 찾을 수 없습니다.');
+                }
+                
+                detailsContainer.innerHTML = `
+                    <h3>${details.name} (${details.code})</h3>
+                    <p><strong>현재가:</strong> ${details.price} | <strong>시가총액:</strong> ${details.market_cap}</p>
+                    <p><strong>PER:</strong> ${details.per} | <strong>PBR:</strong> ${details.pbr}</p>
+                `;
+                insightContainer.textContent = insight.report;
+
+            } catch (error) {
+                detailsContainer.innerHTML = `<p style="color: red;">${error.message}</p>`;
+                insightContainer.innerHTML = '';
+            }
+        });
+
+        // DOM이 완전히 로드되면 페이지 초기화 함수 실행
+        document.addEventListener('DOMContentLoaded', initializePage);
+    </script>
+</body>
+</html>
