@@ -1,6 +1,9 @@
 # app/crud.py
+
 from sqlalchemy.orm import Session
-from .models import db_models, schemas # DB 모델과 API 스키마를 둘 다 import
+from . import db_models
+from .models import schemas
+from datetime import datetime
 
 def create_news_articles(db: Session, articles: list[schemas.NewsArticle], source: str):
     """
@@ -31,3 +34,33 @@ def get_articles_by_source(db: Session, source: str, skip: int = 0, limit: int =
     출처(source)를 기준으로 기사를 조회합니다.
     """
     return db.query(db_models.NewsArticle).filter(db_models.NewsArticle.source == source).order_by(db_models.NewsArticle.id.desc()).offset(skip).limit(limit).all()
+
+
+def insert_search_keyword(db: Session, keyword: str):
+    """
+    검색어를 로그 테이블에 저장합니다.
+    """
+    search_log = db_models.SearchLog(keyword=keyword, searched_at=datetime.utcnow())
+    db.add(search_log)
+    db.commit()
+    db.refresh(search_log)
+    return search_log
+
+def get_top_keywords(db: Session, limit: int = 10):
+    """
+    최근 하루 기준 인기 검색어 TOP N을 조회합니다.
+    """
+    from sqlalchemy import func
+    from datetime import timedelta
+    now = datetime.utcnow()
+    one_day_ago = now - timedelta(days=1)
+
+    result = (
+        db.query(db_models.SearchLog.keyword, func.count(db_models.SearchLog.keyword).label("count"))
+        .filter(db_models.SearchLog.searched_at >= one_day_ago)
+        .group_by(db_models.SearchLog.keyword)
+        .order_by(func.count(db_models.SearchLog.keyword).desc())
+        .limit(limit)
+        .all()
+    )
+    return result
