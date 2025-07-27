@@ -1,10 +1,29 @@
-# 뉴스, 주식 정보 등 데이터의 구조(Schema)를 클래스 형태로 정의합니다.
-
-# app/models/schemas.py
 from pydantic import BaseModel
-from datetime import datetime
+from typing import List, Optional
 
 class NewsArticle(BaseModel):
+    id: int
     title: str
     url: str
-    published_at: datetime
+    published_at: str
+    click_count: int
+
+    class Config:
+        from_attributes = True
+
+class StockDetail(BaseModel):
+    code: str
+    name: str
+    price: str
+    market_cap: str
+    per: str
+    pbr: str
+
+class TopKeyword(BaseModel):
+    keyword: str
+    count: int
+
+class Insight(BaseModel):
+    stock_name: str
+    conclusion: str
+    report: str

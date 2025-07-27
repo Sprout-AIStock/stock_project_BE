@@ -1,5 +1,4 @@
-# app/models/db_models.py
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, func
 from app.database import Base
 
 class NewsArticle(Base):
@@ -7,6 +6,14 @@ class NewsArticle(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
-    url = Column(String, unique=True) # 중복 저장을 막기 위해 URL은 고유값으로 설정
+    url = Column(String, unique=True)
     published_at = Column(String)
-    source = Column(String, index=True) # 'macro', 'themed' 등 출처 구분
+    source = Column(String, index=True)
+    click_count = Column(Integer, default=0)
+
+class SearchLog(Base):
+    __tablename__ = "search_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    keyword = Column(String, index=True)
+    searched_at = Column(DateTime, server_default=func.now())
