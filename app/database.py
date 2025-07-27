@@ -1,11 +1,12 @@
 # app/database.py
+# 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # 1. 데이터베이스 접속 주소 설정 (SQLite 사용)
 # 프로젝트 루트 폴더에 sql_app.db 라는 파일로 DB가 생성됩니다.
-SQLALCHEMY_DATABASE_URL = "sqlite:///../sql_app.db"
+SQLALCHEMY_DATABASE_URL = "sqlite:///./sql_app.db"
 
 # 2. 데이터베이스 엔진 생성
 engine = create_engine(
