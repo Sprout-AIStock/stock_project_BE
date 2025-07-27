@@ -2,6 +2,7 @@
 .env
 venv/
 .DS_Store
+app/__pycache__
 
 # Database
 sql_app.db
@@ -10,7 +11,3 @@ sql_app.db
 create_tables.py
 test_insert.py
 test_NaverAPI.py
-
-# Trash
-app/__pycache__
-.DS_Store
