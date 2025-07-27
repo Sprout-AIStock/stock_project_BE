@@ -40,7 +40,7 @@ def insert_search_keyword(db: Session, keyword: str):
     """
     검색어를 로그 테이블에 저장합니다.
     """
-    search_log = db_models.SearchLog(keyword=keyword, searched_at=datetime.utcnow())
+    search_log = db_models.SearchLog(keyword=keyword, searched_at=datetime())
     db.add(search_log)
     db.commit()
     db.refresh(search_log)
@@ -64,3 +64,25 @@ def get_top_keywords(db: Session, limit: int = 10):
         .all()
     )
     return result
+
+def increment_article_click(db: Session, article_id: int):
+    """
+    특정 뉴스 기사의 클릭 수를 1 증가시킵니다.
+    """
+    article = db.query(db_models.NewsArticle).filter_by(id=article_id).first()
+    if article:
+        article.click_count += 1
+        db.commit()
+        db.refresh(article)
+    return article
+
+def get_top_articles_by_click(db: Session, limit: int = 10):
+    """
+    클릭 수 기준 인기 뉴스 기사 TOP N을 조회합니다.
+    """
+    return (
+        db.query(db_models.NewsArticle)
+        .order_by(db_models.NewsArticle.click_count.desc())
+        .limit(limit)
+        .all()
+    )
