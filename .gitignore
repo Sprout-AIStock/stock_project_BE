@@ -1,6 +1,8 @@
 # Environment
 .env
 venv/
+.DS_Store
 
 # Database
 sql_app.db
+app/__pycache__
