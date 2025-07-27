@@ -6,4 +6,4 @@ venv/
 sql_app.db
 
 # Trash
-__pycache__
+app/__pycache__
