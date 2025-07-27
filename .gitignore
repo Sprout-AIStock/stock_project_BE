@@ -5,4 +5,10 @@ venv/
 
 # Database
 sql_app.db
+<<<<<<< HEAD
 app/__pycache__
+=======
+
+# Trash
+
+>>>>>>> 1f68d9e558a82a4977e3d5de279b34dd8c9ae55a
