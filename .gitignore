@@ -5,10 +5,12 @@ venv/
 
 # Database
 sql_app.db
-<<<<<<< HEAD
-app/__pycache__
-=======
+
+# Python
+create_tables.py
+test_insert.py
+test_NaverAPI.py
 
 # Trash
-
->>>>>>> 1f68d9e558a82a4977e3d5de279b34dd8c9ae55a
+app/__pycache__
+.DS_Store
