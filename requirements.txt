@@ -1,0 +1,17 @@
+# API 서버
+fastapi
+uvicorn
+
+# 외부 API 요청 및 스케줄링
+requests
+apscheduler
+
+# 데이터 수집 및 AI
+finance-datareader
+openai>=1.0.0
+
+# 설정 관리
+pydantic-settings
+
+# 데이터베이스
+sqlalchemy
