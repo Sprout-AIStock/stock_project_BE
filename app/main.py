@@ -3,7 +3,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.responses import FileResponse  # 👈 1. FileResponse import 추가
 from sqlalchemy.orm import Session
 from typing import List
-
+from app.models.schemas import InsightResponse, ChatbotQuery
 from app import crud, models
 from app.core import stock_info, insight_generator, news_fetcher
 from app.database import SessionLocal, engine, Base
@@ -85,6 +85,27 @@ def get_ai_insight(stock_code: str, db: Session = Depends(get_db)):
     conclusion = insight_generator.get_logical_conclusion(stock.name)
     report = insight_generator.generate_final_insight(stock.name, conclusion)
     return Insight(stock_name=stock.name, conclusion=conclusion, report=report)
+
+@app.get("/api/insight/{stock_code}", response_model=InsightResponse)
+def get_full_ai_pipeline(stock_code: str):
+    stock = stock_info.get_stock_details_from_naver(stock_code)
+    if not stock:
+        raise HTTPException(status_code=404, detail="종목 정보를 찾을 수 없습니다.")
+    
+    clova_insight = insight_generator.get_clova_insight(stock.name)
+    gpt_report_text = insight_generator.get_gpt_report(stock.name, clova_insight)
+    report_id = insight_generator.save_report_to_file(gpt_report_text)
+    
+    return InsightResponse(quick_insight=clova_insight, report_id=report_id)
+
+@app.post("/api/chatbot/query")
+def handle_chatbot_query(query: ChatbotQuery):
+    answer = insight_generator.query_document_chatbot(
+        report_id=query.report_id,
+        user_question=query.user_question
+    )
+    return {"answer": answer}
+
 #endregion
 
 # region [Flask Application]

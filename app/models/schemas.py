@@ -27,3 +27,11 @@ class Insight(BaseModel):
     stock_name: str
     conclusion: str
     report: str
+
+class InsightResponse(BaseModel):
+    quick_insight: str
+    report_id: str
+
+class ChatbotQuery(BaseModel):
+    report_id: str
+    user_question: str
