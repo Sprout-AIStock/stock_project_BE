@@ -1,4 +1,3 @@
-# 네이버 증권 API를 통해서 시총, 가격, 차트를 받아옵니다.
 import json
 import urllib.request
 
@@ -10,6 +9,27 @@ raw_data = urllib.request.urlopen(url).read()
 #추후, 데이터 가공을 위해 json 형식으로 변경 합니다.
 json_data = json.loads(raw_data)
 
+def get_stock_code_by_name(stock_name: str) -> str | None:
+    """DeepSearch API를 이용해 종목명으로 종목 코드를 검색합니다."""
+    api_url = "https://api-v2.deepsearch.com/v2/companies/search"
+    params = {
+        "api_key": settings.DEEPSEARCH_API_KEY,
+        "keyword": stock_name,
+        "page_size": 1 # 가장 정확한 결과 1개만 가져오기
+    }
+    try:
+        response = requests.get(api_url, params=params)
+        response.raise_for_status()
+        data = response.json()
+        companies = data.get('data', [])
+        if companies:
+            # 검색 결과의 첫 번째 항목에서 종목 코드(symbol)를 반환
+            return companies[0].get('symbol')
+        return None
+    except requests.exceptions.RequestException as e:
+        print(f"Error searching for stock code by name '{stock_name}': {e}")
+        return None
+    
 def print_structure(data, indent=0):
     prefix = " " * indent
     if isinstance(data, dict):

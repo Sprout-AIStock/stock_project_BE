@@ -94,3 +94,25 @@ def handle_chatbot_query(query: ChatbotQuery):
         user_question=query.user_question
     )
     return {"answer": answer}
+
+# app/main.py 파일에 새로운 API 추가
+
+@app.get("/api/stock/search-by-name/{stock_name}", response_model=StockDetail)
+def search_stock_details_by_name(stock_name: str, db: Session = Depends(get_db)):
+    """
+    종목명으로 상세 정보를 조회하고, 검색 기록을 DB에 남깁니다.
+    """
+    # 1. 종목명으로 종목 코드 찾기
+    stock_code = stock_info.get_stock_code_by_name(stock_name)
+    if not stock_code:
+        raise HTTPException(status_code=404, detail=f"'{stock_name}'에 해당하는 종목을 찾을 수 없습니다.")
+
+    # 2. 찾은 코드로 기존의 상세 정보 조회 함수 호출
+    details = stock_info.get_stock_details_from_naver(stock_code)
+    if not details:
+        raise HTTPException(status_code=404, detail="종목 정보를 가져올 수 없습니다.")
+    
+    # 3. 검색 기록 남기기
+    crud.insert_search_keyword(db=db, keyword=details.name)
+
+    return details
