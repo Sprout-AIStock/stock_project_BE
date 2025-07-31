@@ -28,18 +28,15 @@ def get_trending_macro_topics(limit: int = 10) -> Optional[List[schemas.NewsArti
         print(f"Request failed for macro topics: {e}")
         return None
 
+# app/core/news_fetcher.py 파일에서 get_investment_themes 함수를 아래와 같이 수정
+
 def get_investment_themes() -> Optional[List[str]]:
-    api_url = f"{DEEPSEARCH_API_BASE_URL}/v2/markets/invest_tags"
-    params = {"api_key": settings.DEEPSEARCH_API_KEY, "country_code": "kr"}
-    try:
-        response = requests.get(api_url, params=params)
-        response.raise_for_status()
-        data = response.json()
-        themes = [item['name'] for item in data.get('data', []) if 'name' in item]
-        return themes
-    except requests.exceptions.RequestException as e:
-        print(f"Request failed for themes: {e}")
-        return None
+    """
+    DeepSearch API에서 제공하는 '투자 테마 태그' 목록을 가져옵니다.
+    (현재 API 키 권한 문제로 임시 비활성화)
+    """
+    print("NOTE: get_investment_themes API call is temporarily disabled due to plan restrictions.")
+    return None # 👈 API 호출 대신 None을 반환하도록 수정
 
 def get_articles_by_theme(theme_name: str, limit: int = 10) -> Optional[List[schemas.NewsArticle]]:
     api_url = f"{DEEPSEARCH_API_BASE_URL}/v1/articles"
